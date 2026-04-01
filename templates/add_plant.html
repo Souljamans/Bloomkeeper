@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+
+{% block title %}{% if plant %}Edit Plant{% else %}Add Plant{% endif %} — Plant Care App{% endblock %}
+
+{% block content %}
+<div class="form-page">
+  <h1>{% if plant %}Edit Plant{% else %}Add New Plant{% endif %}</h1>
+
+  <form id="plant-form" method="POST" enctype="multipart/form-data"
+        action="{% if plant %}{{ url_for('edit_plant', plant_id=plant.id) }}{% else %}{{ url_for('add_plant') }}{% endif %}">
+
+    <!-- Nickname -->
+    <div class="form-group">
+      <label for="nickname">Nickname <span class="optional">(optional)</span></label>
+      <input type="text" id="nickname" name="nickname"
+             placeholder="e.g. My Little Fern"
+             value="{{ plant.nickname if plant else '' }}">
+    </div>
+
+    <!-- Species + Lookup -->
+    <div class="form-group">
+      <label for="species">Species Name <span class="required">*</span></label>
+      <div class="input-with-button">
+        <input type="text" id="species" name="species" required
+               placeholder="e.g. Pothos, Snake Plant"
+               value="{{ plant.species if plant else '' }}">
+        <button type="button" id="lookup-btn" class="btn btn-secondary">Look Up Info</button>
+      </div>
+      <div id="lookup-spinner" class="spinner hidden" aria-live="polite">Looking up plant info…</div>
+      <div id="lookup-error" class="lookup-error hidden" role="alert"></div>
+      <!-- Info sourced from Perenual (https://perenual.com). -->
+      <p class="attribution">Plant info sourced from <a href="https://perenual.com" target="_blank" rel="noopener">Perenual</a>.</p>
+    </div>
+
+    <!-- Photo upload -->
+    <div class="form-group">
+      <label for="photo">Photo <span class="optional">(optional)</span></label>
+      <input type="file" id="photo" name="photo" accept="image/jpeg,image/png,image/webp">
+      <div id="photo-preview-wrap" class="photo-preview-wrap {% if not (plant and plant.photo) %}hidden{% endif %}">
+        {% if plant and plant.photo %}
+          <img id="photo-preview" src="{{ url_for('static', filename='uploads/' + plant.photo) }}" alt="Plant photo preview">
+        {% else %}
+          <img id="photo-preview" src="" alt="Plant photo preview">
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Light requirement -->
+    <div class="form-group">
+      <label for="light">Light Requirement</label>
+      <select id="light" name="light">
+        {% set light_options = ["Low", "Medium", "Bright Indirect", "Full Sun"] %}
+        {% for opt in light_options %}
+          <option value="{{ opt }}" {% if plant and plant.light == opt %}selected{% endif %}>{{ opt }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Watering frequency -->
+    <div class="form-group">
+      <label for="watering_frequency">Watering Frequency</label>
+      <div class="inline-label">
+        Every <input type="number" id="watering_frequency" name="watering_frequency"
+                     min="1" max="365" value="{{ plant.watering_frequency if plant else 7 }}"> days
+      </div>
+    </div>
+
+    <!-- Last watered -->
+    <div class="form-group">
+      <label for="last_watered">Last Watered</label>
+      <input type="date" id="last_watered" name="last_watered"
+             value="{{ plant.last_watered if plant else today }}">
+    </div>
+
+    <!-- Notes -->
+    <div class="form-group">
+      <label for="notes">Personal Notes</label>
+      <textarea id="notes" name="notes" rows="4"
+                placeholder="Anything you want to remember about this plant…">{{ plant.notes if plant else '' }}</textarea>
+    </div>
+
+    <!-- Auto-info (read-only preview, editable) -->
+    <fieldset class="auto-info-fieldset">
+      <legend>Plant Info <span class="optional">(auto-filled by lookup, editable)</span></legend>
+
+      <div class="form-group">
+        <label for="description">Description</label>
+        <textarea id="description" name="description" rows="3">{{ plant.auto_info.description if plant else '' }}</textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="origin">Origin / Region</label>
+        <input type="text" id="origin" name="origin"
+               value="{{ plant.auto_info.origin if plant else '' }}">
+      </div>
+
+      <div class="form-group">
+        <label for="toxicity">Toxicity</label>
+        <input type="text" id="toxicity" name="toxicity"
+               value="{{ plant.auto_info.toxicity if plant else '' }}">
+      </div>
+    </fieldset>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">
+        {% if plant %}Save Changes{% else %}Add Plant{% endif %}
+      </button>
+      <a href="{{ url_for('index') }}" class="btn btn-ghost">Cancel</a>
+    </div>
+  </form>
+</div>
+
+<script>
+(function () {
+  // Photo preview
+  const photoInput = document.getElementById('photo');
+  const previewWrap = document.getElementById('photo-preview-wrap');
+  const previewImg  = document.getElementById('photo-preview');
+
+  photoInput.addEventListener('change', function () {
+    const file = this.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      previewImg.src = e.target.result;
+      previewWrap.classList.remove('hidden');
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // Perenual lookup
+  const lookupBtn  = document.getElementById('lookup-btn');
+  const spinner    = document.getElementById('lookup-spinner');
+  const errorDiv   = document.getElementById('lookup-error');
+
+  lookupBtn.addEventListener('click', async function () {
+    const species = document.getElementById('species').value.trim();
+    if (!species) {
+      showError('Please enter a species name first.');
+      return;
+    }
+
+    clearError();
+    spinner.classList.remove('hidden');
+    lookupBtn.disabled = true;
+
+    try {
+      const resp = await fetch('/api/lookup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ species }),
+      });
+
+      const data = await resp.json();
+
+      if (!resp.ok) {
+        showError(data.error || 'Something went wrong. Please try again.');
+        return;
+      }
+
+      // Auto-fill fields
+      if (data.light) {
+        const lightSel = document.getElementById('light');
+        for (const opt of lightSel.options) {
+          if (opt.value.toLowerCase() === data.light.toLowerCase()) {
+            opt.selected = true;
+            break;
+          }
+        }
+      }
+      if (data.watering_frequency) {
+        document.getElementById('watering_frequency').value = data.watering_frequency;
+      }
+      if (data.auto_info) {
+        document.getElementById('description').value = data.auto_info.description || '';
+        document.getElementById('origin').value      = data.auto_info.origin      || '';
+        document.getElementById('toxicity').value    = data.auto_info.toxicity    || '';
+      }
+    } catch (err) {
+      showError('Network error. Please check your connection and try again.');
+    } finally {
+      spinner.classList.add('hidden');
+      lookupBtn.disabled = false;
+    }
+  });
+
+  function showError(msg) {
+    errorDiv.textContent = msg;
+    errorDiv.classList.remove('hidden');
+  }
+
+  function clearError() {
+    errorDiv.textContent = '';
+    errorDiv.classList.add('hidden');
+  }
+})();
+</script>
+{% endblock %}
