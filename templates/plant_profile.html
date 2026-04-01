@@ -3,5 +3,98 @@
 {% block title %}{{ display_name }} — Plant Care App{% endblock %}
 
 {% block content %}
-<h1>{{ display_name }}</h1>
+<div class="profile-page">
+
+  <!-- Hero: photo + name -->
+  <div class="profile-hero">
+    <div class="profile-photo">
+      {% if plant.photo %}
+        <img src="{{ url_for('static', filename='uploads/' + plant.photo) }}"
+             alt="{{ display_name }}">
+      {% else %}
+        <div class="photo-placeholder large">🌿</div>
+      {% endif %}
+    </div>
+
+    <div class="profile-title">
+      <h1>{{ display_name }}</h1>
+      {% if plant.nickname and plant.nickname.strip() %}
+        <p class="species-subtitle">{{ plant.species }}</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Care info -->
+  <div class="profile-card">
+    <h2>Care Info</h2>
+    <ul class="info-list">
+      <li>
+        <span class="info-icon">💧</span>
+        <span class="info-label">Watering</span>
+        <span class="info-value">Every {{ plant.watering_frequency }} day{{ 's' if plant.watering_frequency != 1 else '' }}</span>
+      </li>
+      <li>
+        <span class="info-icon">☀️</span>
+        <span class="info-label">Light</span>
+        <span class="info-value">{{ plant.light or '—' }}</span>
+      </li>
+      <li>
+        <span class="info-icon">📅</span>
+        <span class="info-label">Last Watered</span>
+        <span class="info-value">{{ plant.last_watered or '—' }}</span>
+      </li>
+      <li>
+        <span class="info-icon">⏳</span>
+        <span class="info-label">Next Watering</span>
+        <span class="info-value watering-status status-{{ status.status }}">
+          {{ status.label }}
+        </span>
+      </li>
+    </ul>
+  </div>
+
+  <!-- About This Plant -->
+  {% if plant.auto_info.description or plant.auto_info.origin or plant.auto_info.toxicity %}
+  <div class="profile-card">
+    <h2>About This Plant</h2>
+    {% if plant.auto_info.description %}
+      <p>{{ plant.auto_info.description }}</p>
+    {% endif %}
+    <dl class="about-list">
+      {% if plant.auto_info.origin %}
+        <dt>Origin</dt>
+        <dd>{{ plant.auto_info.origin }}</dd>
+      {% endif %}
+      {% if plant.auto_info.toxicity %}
+        <dt>Toxicity</dt>
+        <dd>{{ plant.auto_info.toxicity }}</dd>
+      {% endif %}
+    </dl>
+    <p class="attribution">Info sourced from <a href="https://perenual.com" target="_blank" rel="noopener">Perenual</a>.</p>
+  </div>
+  {% endif %}
+
+  <!-- Personal Notes -->
+  {% if plant.notes %}
+  <div class="profile-card">
+    <h2>Personal Notes</h2>
+    <p class="notes-text">{{ plant.notes }}</p>
+  </div>
+  {% endif %}
+
+  <!-- Action buttons -->
+  <div class="profile-actions">
+    <form method="POST" action="{{ url_for('mark_watered', plant_id=plant.id) }}">
+      <button type="submit" class="btn btn-watered">✅ Mark as Watered</button>
+    </form>
+
+    <a href="{{ url_for('edit_plant', plant_id=plant.id) }}" class="btn btn-secondary">✏️ Edit Plant</a>
+
+    <form method="POST" action="{{ url_for('delete_plant', plant_id=plant.id) }}"
+          onsubmit="return confirm('Delete {{ display_name }}? This cannot be undone.')">
+      <button type="submit" class="btn btn-danger">🗑️ Delete Plant</button>
+    </form>
+  </div>
+
+</div>
 {% endblock %}

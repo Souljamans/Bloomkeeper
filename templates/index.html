@@ -3,5 +3,58 @@
 {% block title %}My Plants — Plant Care App{% endblock %}
 
 {% block content %}
-<h1>My Plants</h1>
+<div class="dashboard">
+
+  <div class="dashboard-header">
+    <h1>My Plants</h1>
+    <a href="{{ url_for('add_plant') }}" class="btn btn-primary">+ Add New Plant</a>
+  </div>
+
+  {% if plants %}
+    <div class="summary-bar">
+      {% if counts.overdue %}
+        <span class="summary-chip chip-overdue">{{ counts.overdue }} overdue</span>
+      {% endif %}
+      {% if counts.due_today %}
+        <span class="summary-chip chip-due-today">{{ counts.due_today }} due today</span>
+      {% endif %}
+      {% if counts.upcoming %}
+        <span class="summary-chip chip-upcoming">{{ counts.upcoming }} upcoming</span>
+      {% endif %}
+    </div>
+
+    <div class="plant-grid">
+      {% for plant in plants %}
+        <a href="{{ url_for('plant_profile', plant_id=plant.id) }}" class="plant-card">
+          <div class="card-photo">
+            {% if plant.photo %}
+              <img src="{{ url_for('static', filename='uploads/' + plant.photo) }}"
+                   alt="{{ display_name(plant) }}">
+            {% else %}
+              <div class="photo-placeholder">🌿</div>
+            {% endif %}
+          </div>
+          <div class="card-body">
+            <h2 class="card-name">{{ display_name(plant) }}</h2>
+            <span class="watering-badge badge-{{ plant._status.status }}">
+              {% if plant._status.status == "overdue" %}🔴
+              {% elif plant._status.status == "due_today" %}🟡
+              {% else %}🟢
+              {% endif %}
+              {{ plant._status.label }}
+            </span>
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+
+  {% else %}
+    <div class="empty-state">
+      <p class="empty-icon">🪴</p>
+      <p>No plants yet. Add your first one!</p>
+      <a href="{{ url_for('add_plant') }}" class="btn btn-primary">+ Add New Plant</a>
+    </div>
+  {% endif %}
+
+</div>
 {% endblock %}

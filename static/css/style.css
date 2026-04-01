@@ -1,1 +1,562 @@
-/* Styles added in Step 8 */
+/* ============================================================
+   Plant Care App — style.css
+   Color palette:
+     Primary green:       #4a7c59
+     Light green:         #a8c5a0
+     Blush pink:          #e8a0a0
+     Soft pink bg:        #fdf0f0
+     Warm brown:          #7b4f2e
+     Tan / border:        #c9a07a
+     Page background:     #f8f5f0
+     Card white:          #ffffff
+     Text dark:           #2d2d2d
+   ============================================================ */
+
+/* ── Reset & base ─────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { font-size: 16px; }
+
+body {
+  font-family: 'Lato', sans-serif;
+  background: #f8f5f0;
+  color: #2d2d2d;
+  min-height: 100vh;
+  animation: fadeIn 0.35s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+h1, h2, h3 {
+  font-family: 'Playfair Display', serif;
+  color: #7b4f2e;
+}
+
+a { color: #4a7c59; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+img { display: block; max-width: 100%; height: auto; }
+
+/* ── Nav bar ──────────────────────────────────────────────── */
+.navbar {
+  background: #4a7c59;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.5rem;
+  height: 56px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.nav-brand {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #fff;
+  text-decoration: none;
+}
+
+.nav-links {
+  display: flex;
+  gap: 1.25rem;
+}
+
+.nav-links a {
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-decoration: none;
+  opacity: 0.9;
+  transition: opacity 0.2s;
+}
+
+.nav-links a:hover { opacity: 1; text-decoration: none; }
+
+/* ── Main content wrapper ─────────────────────────────────── */
+.main-content {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2rem 1.25rem;
+}
+
+/* ── Flash messages ───────────────────────────────────────── */
+.flash {
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.25rem;
+  font-weight: 700;
+}
+
+.flash-success { background: #d4edda; color: #1a5c2e; border: 1px solid #a8c5a0; }
+.flash-error   { background: #fde8e8; color: #8b1a1a; border: 1px solid #e8a0a0; }
+
+/* ── Buttons ──────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
+  border: none;
+  font-family: 'Lato', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+  text-decoration: none;
+}
+
+.btn:active { transform: scale(0.97); }
+
+.btn-primary {
+  background: #4a7c59;
+  color: #fff;
+}
+.btn-primary:hover { background: #3a6347; text-decoration: none; color: #fff; }
+
+.btn-secondary {
+  background: #fff;
+  color: #4a7c59;
+  border: 2px solid #4a7c59;
+}
+.btn-secondary:hover { background: #f0f7f2; text-decoration: none; }
+
+.btn-watered {
+  background: #e8a0a0;
+  color: #fff;
+}
+.btn-watered:hover { background: #d88080; text-decoration: none; color: #fff; }
+
+.btn-danger {
+  background: #fff;
+  color: #c0392b;
+  border: 2px solid #c0392b;
+}
+.btn-danger:hover { background: #fde8e8; text-decoration: none; }
+
+.btn-ghost {
+  background: transparent;
+  color: #7b4f2e;
+  border: 2px solid #c9a07a;
+}
+.btn-ghost:hover { background: #fdf0f0; text-decoration: none; }
+
+/* ── Dashboard ────────────────────────────────────────────── */
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.dashboard-header h1 { margin: 0; }
+
+/* Summary bar */
+.summary-bar {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+.summary-chip {
+  padding: 0.3rem 0.85rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.chip-overdue   { background: #fde8e8; color: #8b1a1a; }
+.chip-due-today { background: #fff8e1; color: #7a5c00; }
+.chip-upcoming  { background: #e8f5e9; color: #1a5c2e; }
+
+/* Plant grid */
+.plant-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+}
+
+@media (max-width: 900px) {
+  .plant-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 540px) {
+  .plant-grid { grid-template-columns: 1fr; }
+}
+
+/* Plant card */
+.plant-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  color: inherit;
+  text-decoration: none;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.plant-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.13);
+  text-decoration: none;
+  background: #fdf0f0;
+}
+
+.card-photo {
+  width: 100%;
+  aspect-ratio: 4/3;
+  overflow: hidden;
+  background: #f0ebe4;
+}
+
+.card-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photo-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3.5rem;
+  background: #f0ebe4;
+}
+
+.photo-placeholder.large { font-size: 6rem; min-height: 240px; }
+
+.card-body {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.card-name {
+  font-size: 1.1rem;
+  color: #7b4f2e;
+  margin: 0;
+}
+
+/* Watering badge */
+.watering-badge {
+  display: inline-block;
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  width: fit-content;
+}
+
+.badge-overdue   { background: #fde8e8; color: #8b1a1a; }
+.badge-due_today { background: #fff8e1; color: #7a5c00; }
+.badge-upcoming  { background: #e8f5e9; color: #1a5c2e; }
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 4rem 1rem;
+  color: #7b4f2e;
+}
+
+.empty-icon { font-size: 4rem; margin-bottom: 1rem; }
+.empty-state p { margin-bottom: 1.25rem; font-size: 1.1rem; }
+
+/* ── Plant profile page ───────────────────────────────────── */
+.profile-page {
+  max-width: 700px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.profile-hero {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
+}
+
+.profile-photo {
+  flex-shrink: 0;
+  width: 200px;
+  height: 200px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f0ebe4;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.profile-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-title h1 { font-size: 2rem; margin-bottom: 0.25rem; }
+
+.species-subtitle {
+  color: #c9a07a;
+  font-size: 1rem;
+  font-style: italic;
+}
+
+.profile-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+}
+
+.profile-card h2 {
+  font-size: 1.15rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #f0ebe4;
+}
+
+/* Info list */
+.info-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.info-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.info-icon { font-size: 1.1rem; width: 1.5rem; flex-shrink: 0; }
+
+.info-label {
+  color: #c9a07a;
+  font-size: 0.9rem;
+  min-width: 110px;
+}
+
+.info-value { font-weight: 700; }
+
+.watering-status.status-overdue   { color: #c0392b; }
+.watering-status.status-due_today { color: #b07d00; }
+.watering-status.status-upcoming  { color: #2e7d32; }
+
+/* About list */
+.about-list {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.4rem 1rem;
+  margin-top: 0.75rem;
+}
+
+.about-list dt { color: #c9a07a; font-size: 0.9rem; }
+.about-list dd { font-weight: 700; }
+
+.notes-text {
+  white-space: pre-wrap;
+  line-height: 1.6;
+}
+
+/* Profile action buttons */
+.profile-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.profile-actions form,
+.profile-actions .btn {
+  flex: 1;
+  min-width: 140px;
+}
+
+.profile-actions .btn,
+.profile-actions form .btn {
+  width: 100%;
+}
+
+/* ── Add / Edit form ──────────────────────────────────────── */
+.form-page {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.form-page h1 { margin-bottom: 1.5rem; }
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 1.25rem;
+}
+
+.form-group label {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #7b4f2e;
+}
+
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group input[type="date"],
+.form-group input[type="file"],
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: 2px solid #c9a07a;
+  border-radius: 8px;
+  font-family: 'Lato', sans-serif;
+  font-size: 1rem;
+  background: #fff;
+  color: #2d2d2d;
+  transition: border-color 0.2s;
+  min-height: 44px;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #4a7c59;
+}
+
+.form-group textarea { resize: vertical; min-height: 80px; }
+
+.optional { color: #c9a07a; font-weight: 400; font-size: 0.85rem; }
+.required { color: #c0392b; }
+
+.input-with-button {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.input-with-button input { flex: 1; }
+
+.inline-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.inline-label input[type="number"] {
+  width: 80px;
+  text-align: center;
+}
+
+.field-hint {
+  font-size: 0.85rem;
+  color: #c9a07a;
+  margin-top: 0.25rem;
+}
+
+/* Spinner */
+.spinner {
+  font-size: 0.9rem;
+  color: #4a7c59;
+  padding: 0.35rem 0;
+}
+
+.spinner::before {
+  content: '⏳ ';
+}
+
+/* Lookup error */
+.lookup-error {
+  font-size: 0.9rem;
+  color: #c0392b;
+  padding: 0.35rem 0;
+}
+
+/* Attribution */
+.attribution {
+  font-size: 0.8rem;
+  color: #c9a07a;
+  margin-top: 0.25rem;
+}
+
+/* Photo preview */
+.photo-preview-wrap {
+  margin-top: 0.5rem;
+}
+
+.photo-preview-wrap img {
+  max-width: 240px;
+  max-height: 200px;
+  border-radius: 8px;
+  border: 2px solid #c9a07a;
+  object-fit: cover;
+}
+
+/* Auto-info fieldset */
+.auto-info-fieldset {
+  border: 2px solid #c9a07a;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.auto-info-fieldset legend {
+  font-weight: 700;
+  color: #7b4f2e;
+  padding: 0 0.4rem;
+  font-size: 0.95rem;
+}
+
+/* Form actions */
+.form-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* ── 404 page ─────────────────────────────────────────────── */
+.error-page {
+  text-align: center;
+  padding: 4rem 1rem;
+}
+
+.error-page h1 { font-size: 2rem; margin-bottom: 1rem; }
+.error-page p  { margin-bottom: 1.5rem; color: #7b4f2e; }
+
+/* ── Utility ──────────────────────────────────────────────── */
+.hidden { display: none !important; }
+
+/* ── Mobile (≤ 600px) ─────────────────────────────────────── */
+@media (max-width: 600px) {
+  .main-content { padding: 1.25rem 1rem; }
+
+  .profile-hero { flex-direction: column; align-items: center; text-align: center; }
+  .profile-photo { width: 160px; height: 160px; }
+  .profile-title h1 { font-size: 1.5rem; }
+
+  .profile-actions { flex-direction: column; }
+  .profile-actions form,
+  .profile-actions .btn { min-width: unset; }
+
+  .form-actions { flex-direction: column; }
+  .form-actions .btn { width: 100%; }
+
+  .input-with-button { flex-direction: column; }
+  .input-with-button .btn { width: 100%; }
+
+  .dashboard-header { flex-direction: column; align-items: flex-start; }
+}

@@ -36,6 +36,9 @@
     <div class="form-group">
       <label for="photo">Photo <span class="optional">(optional)</span></label>
       <input type="file" id="photo" name="photo" accept="image/jpeg,image/png,image/webp">
+      {% if plant and plant.photo %}
+        <p class="field-hint">A photo is already saved. Upload a new one to replace it.</p>
+      {% endif %}
       <div id="photo-preview-wrap" class="photo-preview-wrap {% if not (plant and plant.photo) %}hidden{% endif %}">
         {% if plant and plant.photo %}
           <img id="photo-preview" src="{{ url_for('static', filename='uploads/' + plant.photo) }}" alt="Plant photo preview">
@@ -105,7 +108,8 @@
       <button type="submit" class="btn btn-primary">
         {% if plant %}Save Changes{% else %}Add Plant{% endif %}
       </button>
-      <a href="{{ url_for('index') }}" class="btn btn-ghost">Cancel</a>
+      <a href="{% if plant %}{{ url_for('plant_profile', plant_id=plant.id) }}{% else %}{{ url_for('index') }}{% endif %}"
+         class="btn btn-ghost">Cancel</a>
     </div>
   </form>
 </div>
