@@ -247,10 +247,17 @@
 
       if (data.light) {
         const lightSel = document.getElementById('light');
+        // Server returns an exact dropdown value; fall back to closest match
+        let matched = false;
         for (const opt of lightSel.options) {
-          if (opt.value.toLowerCase() === data.light.toLowerCase()) {
-            opt.selected = true;
-            break;
+          if (opt.value === data.light) { opt.selected = true; matched = true; break; }
+        }
+        if (!matched) {
+          for (const opt of lightSel.options) {
+            if (opt.value.toLowerCase().includes(data.light.toLowerCase()) ||
+                data.light.toLowerCase().includes(opt.value.toLowerCase())) {
+              opt.selected = true; break;
+            }
           }
         }
       }

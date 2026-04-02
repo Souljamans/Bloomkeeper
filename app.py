@@ -191,13 +191,27 @@ def lookup_plant_info(species_name):
 
     plant = results[0]
 
+    # Watering: Perenual values are "Frequent", "Average", "Minimum", "None"
     watering_map = {"frequent": 2, "average": 7, "minimum": 14, "none": 30}
-    watering_str = (plant.get("watering") or "").lower()
+    watering_str = (plant.get("watering") or "").strip().lower()
     watering_days = watering_map.get(watering_str, 7)
 
-    sunlight = plant.get("sunlight") or []
-    if isinstance(sunlight, list) and sunlight:
-        sunlight_label = sunlight[0].replace("_", " ").title()
+    # Sunlight: Perenual returns varied strings; map them to our four options.
+    # Keywords are checked in order from most specific to least.
+    sunlight_raw = plant.get("sunlight") or []
+    if isinstance(sunlight_raw, str):
+        sunlight_raw = [sunlight_raw]
+    sunlight_str = " ".join(sunlight_raw).lower()
+
+    if any(k in sunlight_str for k in ("full sun", "full_sun")) or \
+            ("direct" in sunlight_str and "indirect" not in sunlight_str):
+        sunlight_label = "Full Sun"
+    elif any(k in sunlight_str for k in ("indirect", "filtered", "bright", "part sun")):
+        sunlight_label = "Bright Indirect"
+    elif any(k in sunlight_str for k in ("part shade", "part_shade", "dappled", "medium")):
+        sunlight_label = "Medium"
+    elif any(k in sunlight_str for k in ("shade", "low", "deep")):
+        sunlight_label = "Low"
     else:
         sunlight_label = ""
 
