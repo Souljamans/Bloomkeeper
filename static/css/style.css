@@ -485,6 +485,43 @@ img { display: block; max-width: 100%; height: auto; }
   padding: 0.35rem 0;
 }
 
+/* Autocomplete */
+.autocomplete-wrap {
+  position: relative;
+  flex: 1;
+}
+
+.autocomplete-list {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 2px solid #4a7c59;
+  border-radius: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0.25rem 0;
+  z-index: 200;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.autocomplete-list li {
+  padding: 0.55rem 0.9rem;
+  cursor: pointer;
+  font-size: 0.95rem;
+  color: #2d2d2d;
+  transition: background 0.15s;
+}
+
+.autocomplete-list li:hover,
+.autocomplete-list li.active {
+  background: #f0f7f2;
+  color: #4a7c59;
+}
+
 /* Attribution */
 .attribution {
   font-size: 0.8rem;

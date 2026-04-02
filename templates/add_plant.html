@@ -21,9 +21,13 @@
     <div class="form-group">
       <label for="species">Species Name <span class="required">*</span></label>
       <div class="input-with-button">
-        <input type="text" id="species" name="species" required
-               placeholder="e.g. Pothos, Snake Plant"
-               value="{{ plant.species if plant else '' }}">
+        <div class="autocomplete-wrap">
+          <input type="text" id="species" name="species" required
+                 placeholder="Start typing a plant name…"
+                 value="{{ plant.species if plant else '' }}"
+                 autocomplete="off">
+          <ul id="autocomplete-list" class="autocomplete-list hidden" role="listbox"></ul>
+        </div>
         <button type="button" id="lookup-btn" class="btn btn-secondary">Look Up Info</button>
       </div>
       <div id="lookup-spinner" class="spinner hidden" aria-live="polite">Looking up plant info…</div>
@@ -116,7 +120,7 @@
 
 <script>
 (function () {
-  // Photo preview
+  // ── Photo preview ────────────────────────────────────────
   const photoInput = document.getElementById('photo');
   const previewWrap = document.getElementById('photo-preview-wrap');
   const previewImg  = document.getElementById('photo-preview');
@@ -132,13 +136,92 @@
     reader.readAsDataURL(file);
   });
 
-  // Perenual lookup
-  const lookupBtn  = document.getElementById('lookup-btn');
-  const spinner    = document.getElementById('lookup-spinner');
-  const errorDiv   = document.getElementById('lookup-error');
+  // ── Autocomplete ─────────────────────────────────────────
+  const speciesInput = document.getElementById('species');
+  const acList       = document.getElementById('autocomplete-list');
+  const lookupBtn    = document.getElementById('lookup-btn');
+  const spinner      = document.getElementById('lookup-spinner');
+  const errorDiv     = document.getElementById('lookup-error');
 
-  lookupBtn.addEventListener('click', async function () {
-    const species = document.getElementById('species').value.trim();
+  let debounceTimer = null;
+  let activeIndex   = -1;
+
+  speciesInput.addEventListener('input', function () {
+    clearTimeout(debounceTimer);
+    const q = this.value.trim();
+    if (q.length < 2) { closeList(); return; }
+    debounceTimer = setTimeout(() => fetchSuggestions(q), 300);
+  });
+
+  speciesInput.addEventListener('keydown', function (e) {
+    const items = acList.querySelectorAll('li');
+    if (!items.length) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      activeIndex = Math.min(activeIndex + 1, items.length - 1);
+      updateActive(items);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      activeIndex = Math.max(activeIndex - 1, -1);
+      updateActive(items);
+    } else if (e.key === 'Enter' && activeIndex >= 0) {
+      e.preventDefault();
+      items[activeIndex].click();
+    } else if (e.key === 'Escape') {
+      closeList();
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.autocomplete-wrap')) closeList();
+  });
+
+  async function fetchSuggestions(q) {
+    try {
+      const resp = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+      const suggestions = await resp.json();
+      renderList(suggestions);
+    } catch (_) {
+      closeList();
+    }
+  }
+
+  function renderList(suggestions) {
+    acList.innerHTML = '';
+    activeIndex = -1;
+    if (!suggestions.length) { closeList(); return; }
+
+    suggestions.forEach((s) => {
+      const li = document.createElement('li');
+      li.setAttribute('role', 'option');
+      li.textContent = s.label;
+      li.addEventListener('click', () => {
+        speciesInput.value = s.scientific || s.common || s.label;
+        closeList();
+        triggerLookup();
+      });
+      acList.appendChild(li);
+    });
+
+    acList.classList.remove('hidden');
+  }
+
+  function updateActive(items) {
+    items.forEach((el, i) => el.classList.toggle('active', i === activeIndex));
+  }
+
+  function closeList() {
+    acList.innerHTML = '';
+    acList.classList.add('hidden');
+    activeIndex = -1;
+  }
+
+  // ── Lookup (shared by button click and autocomplete select) ──
+  lookupBtn.addEventListener('click', triggerLookup);
+
+  async function triggerLookup() {
+    const species = speciesInput.value.trim();
     if (!species) {
       showError('Please enter a species name first.');
       return;
@@ -162,7 +245,6 @@
         return;
       }
 
-      // Auto-fill fields
       if (data.light) {
         const lightSel = document.getElementById('light');
         for (const opt of lightSel.options) {
@@ -186,7 +268,7 @@
       spinner.classList.add('hidden');
       lookupBtn.disabled = false;
     }
-  });
+  }
 
   function showError(msg) {
     errorDiv.textContent = msg;

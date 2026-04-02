@@ -321,6 +321,37 @@ def mark_watered(plant_id):
     return redirect(url_for("plant_profile", plant_id=plant_id))
 
 
+@app.route("/api/search")
+def api_search():
+    """Return a list of matching plant names for autocomplete."""
+    q = request.args.get("q", "").strip()
+    if len(q) < 2:
+        return jsonify([])
+
+    try:
+        resp = requests.get(
+            "https://perenual.com/api/species-list",
+            params={"q": q, "key": PERENUAL_API_KEY},
+            timeout=8,
+        )
+        resp.raise_for_status()
+        data = resp.json().get("data", [])
+    except requests.RequestException:
+        return jsonify([])
+
+    suggestions = []
+    for plant in data[:10]:
+        common = (plant.get("common_name") or "").strip()
+        scientific = (plant.get("scientific_name") or [])
+        if isinstance(scientific, list):
+            scientific = scientific[0] if scientific else ""
+        label = f"{common} ({scientific})" if common and scientific else common or scientific
+        if label:
+            suggestions.append({"label": label, "scientific": scientific, "common": common})
+
+    return jsonify(suggestions)
+
+
 @app.route("/api/lookup", methods=["POST"])
 def api_lookup():
     """Return Perenual plant data for a given species name."""
