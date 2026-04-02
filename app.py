@@ -163,21 +163,275 @@ def _plant_from_form(form, files, existing=None):
 
 
 # ---------------------------------------------------------------------------
+# Local plant database (Perenual free plan returns null for care data)
+# ---------------------------------------------------------------------------
+
+# Keys are lowercase common/scientific name fragments for fuzzy matching.
+# Fields: light, watering_frequency (days), description, origin, toxicity
+_LOCAL_PLANTS = {
+    "pothos": {
+        "light": "Bright Indirect", "watering_frequency": 10,
+        "description": "A vigorous trailing vine with heart-shaped leaves, popular for its extreme adaptability and air-purifying qualities. Tolerates low light and irregular watering better than most houseplants.",
+        "origin": "Solomon Islands", "toxicity": "Toxic to cats and dogs"},
+    "epipremnum": {
+        "light": "Bright Indirect", "watering_frequency": 10,
+        "description": "A vigorous trailing vine with heart-shaped leaves, popular for its extreme adaptability and air-purifying qualities.",
+        "origin": "Solomon Islands", "toxicity": "Toxic to cats and dogs"},
+    "snake plant": {
+        "light": "Low", "watering_frequency": 21,
+        "description": "A tough, architectural plant with stiff upright leaves. Thrives on neglect, tolerates low light, and is one of the best air-purifying houseplants.",
+        "origin": "West Africa", "toxicity": "Mildly toxic to cats and dogs"},
+    "sansevieria": {
+        "light": "Low", "watering_frequency": 21,
+        "description": "A tough, architectural plant with stiff upright leaves. Thrives on neglect and tolerates low light.",
+        "origin": "West Africa", "toxicity": "Mildly toxic to cats and dogs"},
+    "dracaena trifasciata": {
+        "light": "Low", "watering_frequency": 21,
+        "description": "Formerly classified as Sansevieria. Stiff, sword-like leaves with yellow margins. Extremely drought tolerant.",
+        "origin": "West Africa", "toxicity": "Mildly toxic to cats and dogs"},
+    "peace lily": {
+        "light": "Low", "watering_frequency": 7,
+        "description": "One of the few flowering plants that thrives in low light. White spathe blooms and glossy dark leaves. Droops visibly when it needs water.",
+        "origin": "Central and South America", "toxicity": "Toxic to cats and dogs"},
+    "spathiphyllum": {
+        "light": "Low", "watering_frequency": 7,
+        "description": "One of the few flowering plants that thrives in low light. White spathe blooms and glossy dark leaves.",
+        "origin": "Central and South America", "toxicity": "Toxic to cats and dogs"},
+    "spider plant": {
+        "light": "Bright Indirect", "watering_frequency": 7,
+        "description": "Fast-growing with arching green-and-white striped leaves that produce cascading baby plants. Extremely forgiving and safe for pets.",
+        "origin": "South Africa", "toxicity": "Non-toxic"},
+    "chlorophytum": {
+        "light": "Bright Indirect", "watering_frequency": 7,
+        "description": "Fast-growing with arching striped leaves that produce cascading baby plants. Extremely forgiving and safe for pets.",
+        "origin": "South Africa", "toxicity": "Non-toxic"},
+    "fiddle leaf fig": {
+        "light": "Bright Indirect", "watering_frequency": 7,
+        "description": "A statement plant with large, violin-shaped leaves. Loves consistency — hates being moved or overwatered.",
+        "origin": "West Africa", "toxicity": "Toxic to cats and dogs"},
+    "ficus lyrata": {
+        "light": "Bright Indirect", "watering_frequency": 7,
+        "description": "A statement plant with large, violin-shaped leaves. Loves consistency and bright indirect light.",
+        "origin": "West Africa", "toxicity": "Toxic to cats and dogs"},
+    "monstera": {
+        "light": "Bright Indirect", "watering_frequency": 7,
+        "description": "Iconic split leaves (fenestrations) develop as the plant matures. Fast-growing and dramatic; a staple of modern interior design.",
+        "origin": "Central America", "toxicity": "Toxic to cats and dogs"},
+    "zz plant": {
+        "light": "Low", "watering_frequency": 21,
+        "description": "Virtually indestructible — tolerates low light, drought, and neglect. Glossy oval leaflets grow on graceful arching stems.",
+        "origin": "Eastern Africa", "toxicity": "Toxic to cats and dogs"},
+    "zamioculcas": {
+        "light": "Low", "watering_frequency": 21,
+        "description": "Virtually indestructible — tolerates low light, drought, and neglect. Glossy oval leaflets on arching stems.",
+        "origin": "Eastern Africa", "toxicity": "Toxic to cats and dogs"},
+    "aloe vera": {
+        "light": "Full Sun", "watering_frequency": 14,
+        "description": "Succulent with thick fleshy leaves filled with soothing gel. Needs bright light and infrequent watering. The gel inside treats minor burns and skin irritation.",
+        "origin": "Arabian Peninsula", "toxicity": "Mildly toxic to cats and dogs"},
+    "aloe": {
+        "light": "Full Sun", "watering_frequency": 14,
+        "description": "Succulent with thick fleshy leaves filled with soothing gel. Needs bright light and infrequent watering.",
+        "origin": "Africa", "toxicity": "Mildly toxic to cats and dogs"},
+    "rubber plant": {
+        "light": "Bright Indirect", "watering_frequency": 10,
+        "description": "Bold, glossy leaves in deep green or burgundy. Fast-growing and dramatic once established; enjoys being pot-bound.",
+        "origin": "South and Southeast Asia", "toxicity": "Mildly toxic to cats and dogs"},
+    "ficus elastica": {
+        "light": "Bright Indirect", "watering_frequency": 10,
+        "description": "Bold, glossy leaves in deep green or burgundy. Fast-growing and dramatic once established.",
+        "origin": "South and Southeast Asia", "toxicity": "Mildly toxic to cats and dogs"},
+    "chinese evergreen": {
+        "light": "Low", "watering_frequency": 10,
+        "description": "One of the most adaptable houseplants. Wide range of leaf patterns from deep green to pink and red. Tolerates low light and irregular watering.",
+        "origin": "Asia", "toxicity": "Toxic to cats and dogs"},
+    "aglaonema": {
+        "light": "Low", "watering_frequency": 10,
+        "description": "Widely adaptable with striking leaf patterns from deep green to pink and red. Tolerates low light.",
+        "origin": "Asia", "toxicity": "Toxic to cats and dogs"},
+    "philodendron": {
+        "light": "Bright Indirect", "watering_frequency": 7,
+        "description": "Heart-shaped or deeply lobed leaves depending on the variety. Fast-growing, easygoing, and great for beginners.",
+        "origin": "Tropical Americas", "toxicity": "Toxic to cats and dogs"},
+    "calathea": {
+        "light": "Medium", "watering_frequency": 7,
+        "description": "Stunning patterned leaves that fold up at night (a movement called nyctinasty). Needs humidity and indirect light; sensitive to tap water minerals.",
+        "origin": "Tropical Americas", "toxicity": "Non-toxic"},
+    "bird of paradise": {
+        "light": "Full Sun", "watering_frequency": 7,
+        "description": "Large, paddle-shaped leaves that split naturally as they age. Needs lots of bright light to thrive indoors; rewards with dramatic tropical presence.",
+        "origin": "South Africa", "toxicity": "Mildly toxic to cats and dogs"},
+    "strelitzia": {
+        "light": "Full Sun", "watering_frequency": 7,
+        "description": "Large, paddle-shaped leaves that split naturally. Needs lots of bright light indoors.",
+        "origin": "South Africa", "toxicity": "Mildly toxic to cats and dogs"},
+    "boston fern": {
+        "light": "Bright Indirect", "watering_frequency": 5,
+        "description": "Lush, arching fronds that thrive in humidity. One of the best air-purifying plants; loves a bathroom or kitchen with indirect light.",
+        "origin": "Tropical regions worldwide", "toxicity": "Non-toxic"},
+    "nephrolepis": {
+        "light": "Bright Indirect", "watering_frequency": 5,
+        "description": "Lush, arching fronds that thrive in humidity. One of the best air-purifying plants.",
+        "origin": "Tropical regions worldwide", "toxicity": "Non-toxic"},
+    "jade plant": {
+        "light": "Full Sun", "watering_frequency": 14,
+        "description": "Thick, woody stems and plump oval leaves store water. Long-lived and said to bring good luck. Needs bright light and infrequent watering.",
+        "origin": "South Africa and Mozambique", "toxicity": "Toxic to cats and dogs"},
+    "crassula": {
+        "light": "Full Sun", "watering_frequency": 14,
+        "description": "Thick woody stems and plump oval leaves store water. Long-lived; needs bright light and infrequent watering.",
+        "origin": "South Africa", "toxicity": "Toxic to cats and dogs"},
+    "african violet": {
+        "light": "Bright Indirect", "watering_frequency": 7,
+        "description": "Compact flowering plant that blooms almost continuously under the right conditions. Needs bright indirect light and water at the base, not on the leaves.",
+        "origin": "Tanzania", "toxicity": "Non-toxic"},
+    "saintpaulia": {
+        "light": "Bright Indirect", "watering_frequency": 7,
+        "description": "Compact flowering plant that blooms almost continuously. Needs bright indirect light.",
+        "origin": "Tanzania", "toxicity": "Non-toxic"},
+    "english ivy": {
+        "light": "Medium", "watering_frequency": 7,
+        "description": "Classic trailing or climbing vine with iconic lobed leaves. Great for hanging baskets; effective air purifier.",
+        "origin": "Europe and Western Asia", "toxicity": "Toxic to cats, dogs, and humans"},
+    "hedera": {
+        "light": "Medium", "watering_frequency": 7,
+        "description": "Classic trailing or climbing vine with iconic lobed leaves. Great for hanging baskets.",
+        "origin": "Europe and Western Asia", "toxicity": "Toxic to cats, dogs, and humans"},
+    "dieffenbachia": {
+        "light": "Medium", "watering_frequency": 7,
+        "description": "Bold tropical plant with large patterned leaves in shades of green and cream. Tolerates low light but grows fastest in medium light.",
+        "origin": "Tropical Americas", "toxicity": "Toxic to cats, dogs, and humans"},
+    "prayer plant": {
+        "light": "Medium", "watering_frequency": 7,
+        "description": "Leaves fold upward at night like praying hands. Distinctive herringbone pattern in red, green, and cream. Loves humidity.",
+        "origin": "Brazil", "toxicity": "Non-toxic"},
+    "maranta": {
+        "light": "Medium", "watering_frequency": 7,
+        "description": "Leaves fold upward at night like praying hands. Distinctive herringbone pattern. Loves humidity.",
+        "origin": "Brazil", "toxicity": "Non-toxic"},
+    "peperomia": {
+        "light": "Bright Indirect", "watering_frequency": 10,
+        "description": "Hundreds of varieties with thick, waxy leaves in diverse shapes and textures. Stores water in its leaves so tolerates some neglect.",
+        "origin": "Tropical and subtropical regions", "toxicity": "Non-toxic"},
+    "hoya": {
+        "light": "Bright Indirect", "watering_frequency": 10,
+        "description": "Waxy, semi-succulent leaves and clusters of star-shaped flowers. Grows slowly but rewards patience with beautiful blooms.",
+        "origin": "Asia and Australia", "toxicity": "Non-toxic"},
+    "tradescantia": {
+        "light": "Bright Indirect", "watering_frequency": 7,
+        "description": "Fast-growing trailing plant with striking purple, green, or striped leaves. Easy to propagate — snip a stem and pop it in water.",
+        "origin": "Americas", "toxicity": "Mildly toxic to cats and dogs"},
+    "string of pearls": {
+        "light": "Bright Indirect", "watering_frequency": 14,
+        "description": "Cascading stems of bead-like leaves that store water. Stunning in a hanging pot; needs bright light and excellent drainage.",
+        "origin": "South Africa", "toxicity": "Toxic to cats and dogs"},
+    "senecio rowleyanus": {
+        "light": "Bright Indirect", "watering_frequency": 14,
+        "description": "Cascading stems of bead-like leaves. Stunning in a hanging pot; needs bright light and excellent drainage.",
+        "origin": "South Africa", "toxicity": "Toxic to cats and dogs"},
+    "yucca": {
+        "light": "Full Sun", "watering_frequency": 14,
+        "description": "Bold, sword-like leaves on a thick trunk. Extremely drought tolerant once established; needs bright light to stay compact.",
+        "origin": "Americas and Caribbean", "toxicity": "Toxic to cats and dogs"},
+    "anthurium": {
+        "light": "Bright Indirect", "watering_frequency": 7,
+        "description": "Glossy heart-shaped leaves and waxy, long-lasting blooms in red, pink, or white. Thrives in humidity with bright indirect light.",
+        "origin": "Central and South America", "toxicity": "Toxic to cats and dogs"},
+    "oxalis": {
+        "light": "Bright Indirect", "watering_frequency": 7,
+        "description": "Clover-like leaves in rich purple or green that fold up at night. Produces delicate pink or white flowers. Goes dormant in summer.",
+        "origin": "Brazil", "toxicity": "Toxic to cats and dogs"},
+    "dracaena": {
+        "light": "Low", "watering_frequency": 14,
+        "description": "Long, strappy leaves in green, yellow, or tricolor. Extremely tolerant of low light and dry air. One of the best plants for office environments.",
+        "origin": "Africa and Asia", "toxicity": "Toxic to cats and dogs"},
+    "croton": {
+        "light": "Full Sun", "watering_frequency": 7,
+        "description": "Fiery, multicolored leaves in red, orange, yellow, and green. Needs lots of bright light to maintain its vivid colors.",
+        "origin": "Malaysia and Pacific Islands", "toxicity": "Toxic to cats and dogs"},
+    "codiaeum": {
+        "light": "Full Sun", "watering_frequency": 7,
+        "description": "Fiery, multicolored leaves in red, orange, yellow, and green. Needs lots of bright light.",
+        "origin": "Malaysia and Pacific Islands", "toxicity": "Toxic to cats and dogs"},
+    "nerve plant": {
+        "light": "Medium", "watering_frequency": 5,
+        "description": "Tiny but striking, with vivid red, pink, or white veins on deep green leaves. Loves humidity and consistent moisture.",
+        "origin": "Peru", "toxicity": "Non-toxic"},
+    "fittonia": {
+        "light": "Medium", "watering_frequency": 5,
+        "description": "Vivid red, pink, or white veins on deep green leaves. Loves humidity and consistent moisture.",
+        "origin": "Peru", "toxicity": "Non-toxic"},
+    "cast iron plant": {
+        "light": "Low", "watering_frequency": 14,
+        "description": "Lives up to its name — nearly impossible to kill. Thrives in deep shade, irregular watering, and temperature extremes.",
+        "origin": "China and Japan", "toxicity": "Non-toxic"},
+    "aspidistra": {
+        "light": "Low", "watering_frequency": 14,
+        "description": "Nearly impossible to kill. Thrives in deep shade and tolerates irregular watering.",
+        "origin": "China and Japan", "toxicity": "Non-toxic"},
+    "begonia": {
+        "light": "Bright Indirect", "watering_frequency": 7,
+        "description": "Diverse genus with waxy, often colorful foliage and cheerful blooms. Needs bright indirect light and well-draining soil.",
+        "origin": "Tropical and subtropical regions", "toxicity": "Toxic to cats and dogs"},
+    "lavender": {
+        "light": "Full Sun", "watering_frequency": 10,
+        "description": "Fragrant silver-green foliage and purple flower spikes beloved by pollinators. Needs full sun and excellent drainage; drought-tolerant once established.",
+        "origin": "Mediterranean", "toxicity": "Mildly toxic to cats and dogs"},
+    "orchid": {
+        "light": "Bright Indirect", "watering_frequency": 7,
+        "description": "Long-lasting blooms in almost every color. Water sparingly and let the roots dry between waterings. Prefers bright light without direct sun.",
+        "origin": "Tropical Asia", "toxicity": "Non-toxic"},
+    "phalaenopsis": {
+        "light": "Bright Indirect", "watering_frequency": 7,
+        "description": "Moth orchid with long-lasting blooms in almost every color. Let roots dry between waterings.",
+        "origin": "Tropical Asia", "toxicity": "Non-toxic"},
+}
+
+
+def _local_plant_lookup(species_name):
+    """Check the local plant database for a case-insensitive partial match."""
+    name_lower = species_name.lower()
+    # Exact match first
+    if name_lower in _LOCAL_PLANTS:
+        return _LOCAL_PLANTS[name_lower]
+    # Partial match — return first entry whose key appears in the query or vice versa
+    for key, data in _LOCAL_PLANTS.items():
+        if key in name_lower or name_lower in key:
+            return data
+    return None
+
+
+# ---------------------------------------------------------------------------
 # Perenual API helper
 # ---------------------------------------------------------------------------
 
 def lookup_plant_info(species_name):
     """
-    Query the Perenual API for a species and return a dict with care details.
+    Return care info for a species. Checks the local database first, then
+    falls back to the Perenual API (care fields require a paid Perenual plan).
 
     # FUTURE: Claude API integration point
-    # This function currently uses the Perenual REST API to fetch plant info.
-    # To upgrade to AI-powered descriptions, replace (or supplement) the block
-    # below with a call to the Claude API (anthropic.Anthropic().messages.create),
-    # passing the species name and asking Claude to return a structured JSON with
-    # description, origin, toxicity, light, and watering details. This would
-    # produce richer, more conversational plant profiles than the Perenual data.
+    # Replace or supplement this function with a call to the Claude API
+    # (anthropic.Anthropic().messages.create) passing the species name and
+    # asking Claude to return structured JSON with description, origin,
+    # toxicity, light, and watering details. This would provide richer,
+    # AI-powered profiles for any plant, not just those in the local database.
     """
+    # 1. Check local database first (reliable, no API limits)
+    local = _local_plant_lookup(species_name)
+    if local:
+        return {
+            "light": local["light"],
+            "watering_frequency": local["watering_frequency"],
+            "auto_info": {
+                "description": local["description"],
+                "origin": local["origin"],
+                "toxicity": local["toxicity"],
+                "fun_facts": "",
+            },
+        }
+
+    # 2. Fall back to Perenual API
     url = "https://perenual.com/api/species-list"
     params = {"q": species_name, "key": PERENUAL_API_KEY}
 
@@ -191,13 +445,10 @@ def lookup_plant_info(species_name):
 
     plant = results[0]
 
-    # Watering: Perenual values are "Frequent", "Average", "Minimum", "None"
     watering_map = {"frequent": 2, "average": 7, "minimum": 14, "none": 30}
     watering_str = (plant.get("watering") or "").strip().lower()
     watering_days = watering_map.get(watering_str, 7)
 
-    # Sunlight: Perenual returns varied strings; map them to our four options.
-    # Keywords are checked in order from most specific to least.
     sunlight_raw = plant.get("sunlight") or []
     if isinstance(sunlight_raw, str):
         sunlight_raw = [sunlight_raw]
@@ -219,9 +470,9 @@ def lookup_plant_info(species_name):
         "light": sunlight_label,
         "watering_frequency": watering_days,
         "auto_info": {
-            "description": plant.get("description", ""),
+            "description": plant.get("description") or "",
             "origin": ", ".join(plant.get("origin", []) or []),
-            "toxicity": str(plant.get("poisonous_to_humans", "") or ""),
+            "toxicity": str(plant.get("poisonous_to_humans") or ""),
             "fun_facts": "",
         },
     }
